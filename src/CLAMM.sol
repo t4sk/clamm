@@ -7,6 +7,7 @@ import "./libraries/TickMath.sol";
 import "./libraries/Position.sol";
 import "./libraries/Tick.sol";
 import "./libraries/TickBitmap.sol";
+import "./libraries/SqrtPriceMath.sol";
 
 // slot 0 = 32 bytes
 // 2**256 = 32 bytes
@@ -40,9 +41,17 @@ contract CLAMM {
     uint128 public immutable maxLiquidityPerTick;
 
     Slot0 public slot0;
+    uint128 public liquidity;
     mapping(int24 => Tick.Info) public ticks;
     mapping(int16 => uint256) public tickBitmap;
     mapping(bytes32 => Position.Info) public positions;
+
+    modifier lock() {
+        require(slot0.unlocked, "locked");
+        slot0.unlocked = false;
+        _;
+        slot0.unlocked = true;
+    }
 
     constructor(
         address _token0,
@@ -87,6 +96,44 @@ contract CLAMM {
             params.liquidityDelta,
             _slot0.tick
         );
+
+        // Get amount 0 and amount 1
+        // token 1 | token 0
+        // --------|---------
+        //        tick
+        if (params.liquidityDelta != 0) {
+            if (_slot0.tick < params.tickLower) {
+                // Calculate amount 0
+                amount0 = SqrtPriceMath.getAmount0Delta(
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    params.liquidityDelta
+                );
+            } else if (_slot0.tick < params.tickUpper) {
+                // Calculate amount 0 and amount 1
+                amount0 = SqrtPriceMath.getAmount0Delta(
+                    _slot0.sqrtPriceX96,
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    params.liquidityDelta
+                );
+                amount1 = SqrtPriceMath.getAmount1Delta(
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    _slot0.sqrtPriceX96,
+                    params.liquidityDelta
+                );
+
+                liquidity = params.liquidityDelta < 0
+                    ? liquidity - uint128(-params.liquidityDelta)
+                    : liquidity + uint128(params.liquidityDelta);
+            } else {
+                // Calculate amount 1
+                amount1 = SqrtPriceMath.getAmount1Delta(
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    params.liquidityDelta
+                );
+            }
+        }
     }
 
     function _updatePosition(
@@ -136,7 +183,7 @@ contract CLAMM {
         int24 tickLower,
         int24 tickUpper,
         uint128 amount
-    ) external returns (uint256 amount0, uint256 amount1) {
+    ) external lock returns (uint256 amount0, uint256 amount1) {
         require(amount > 0, "amount = 0");
 
         (, int256 amount0Int, int256 amount1Int) = _modifyPosition(
@@ -160,9 +207,160 @@ contract CLAMM {
         }
     }
 
-    function collect() external {}
+    function collect(
+        address recipient,
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 amount0Requested,
+        uint128 amount1Requested
+    ) external lock returns (uint128 amount0, uint128 amount1) {
+        Position.Info storage position =
+            positions.get(msg.sender, tickLower, tickUpper);
 
-    function burn() external {}
+        amount0 = amount0Requested > position.tokensOwed0
+            ? position.tokensOwed0
+            : amount0Requested;
+        amount1 = amount1Requested > position.tokensOwed1
+            ? position.tokensOwed1
+            : amount1Requested;
 
-    function swap() external {}
+        if (amount0 > 0) {
+            position.tokensOwed0 -= amount0;
+            IERC20(token0).transfer(recipient, amount0);
+        }
+        if (amount1 > 0) {
+            position.tokensOwed1 -= amount1;
+            IERC20(token1).transfer(recipient, amount1);
+        }
+    }
+
+    function burn(int24 tickLower, int24 tickUpper, uint128 amount)
+        external
+        lock
+        returns (uint256 amount0, uint256 amount1)
+    {
+        (Position.Info storage position, int256 amount0Int, int256 amount1Int) =
+        _modifyPosition(
+            ModifyPositionParams({
+                owner: msg.sender,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                liquidityDelta: -int256(uint256(amount)).toInt128()
+            })
+        );
+
+        amount0 = uint256(-amount0Int);
+        amount1 = uint256(-amount1Int);
+
+        if (amount0 > 0 || amount1 > 0) {
+            (position.tokensOwed0, position.tokensOwed1) = (
+                position.tokensOwed0 + uint128(amount0),
+                position.tokensOwed1 + uint128(amount1)
+            );
+        }
+        // NOTE: no transfer of tokens
+    }
+
+    struct SwapCache {
+        uint128 liquidityStart;
+    }
+
+    struct SwapState {
+        int256 amountSpecifiedRemaining;
+        // amount already swapped out/in of the output/input asset
+        int256 amountCalculated;
+        uint160 sqrtPriceX96;
+        int24 tick;
+        // fee growth on input token
+        uint256 feeGrowthGlobalX128;
+        // current liquidity in range
+        uint128 liquidity;
+    }
+
+    struct StepComputations {
+        uint160 sqrtPriceStartX96;
+        int24 tickNext;
+        // whether tickNext is initialized or not
+        bool initialized;
+        uint160 sqrtPriceNextX96;
+        // how much is being swapped in in this step
+        uint256 amountIn;
+        // how much is being swapped out
+        uint256 amountOut;
+        // how much fee is being paid in
+        uint256 feeAmount;
+    }
+
+    function swap(
+        address recipient,
+        bool zeroForOne,
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96
+    ) external lock returns (int128 amount0, int128 amount1) {
+        require(amountSpecified != 0);
+
+        Slot0 memory slot0Start = slot0;
+
+        // token 1 | token 0
+        // --------|---------
+        //        tick
+        // <-- zero for one
+        require(
+            zeroForOne
+                ? sqrtPriceLimitX96 < slot0Start.sqrtPriceX96
+                    && sqrtPriceLimitX96 > TickMath.MIN_SQRT_RATIO
+                : sqrtPriceLimitX96 > slot0Start.sqrtPriceX96
+                    && sqrtPriceLimitX96 < TickMath.MAX_SQRT_RATIO,
+            "invalid sqrt price limit"
+        );
+
+        SwapCache memory cache = SwapCache({liquidityStart: liquidity});
+
+        // true = sell some specified amount of token in
+        // false = buy some specified amount of token out
+        bool exactInput = amountSpecified > 0;
+
+        SwapState memory state = SwapState({
+            amountSpecifiedRemaining: amountSpecified,
+            amountCalculated: 0,
+            sqrtPriceX96: slot0Start.sqrtPriceX96,
+            tick: slot0Start.tick,
+            // TODO: fees
+            feeGrowthGlobalX128: 0,
+            liquidity: cache.liquidityStart
+        });
+
+        while (
+            state.amountSpecifiedRemaining != 0
+                && state.sqrtPriceX96 != sqrtPriceLimitX96
+        ) {
+            StepComputations memory step;
+
+            step.sqrtPriceStartX96 = state.sqrtPriceX96;
+
+            if (exactInput) {
+                state.amountSpecifiedRemaining -= 0;
+                // state.amountCalculated =
+            } else {
+                //
+            }
+        }
+
+        if (zeroForOne) {
+            if (amount1 < 0) {
+                IERC20(token1).transfer(recipient, uint256(-int256(amount1)));
+                // TODO: check amount 0 > 0
+                IERC20(token0).transferFrom(
+                    msg.sender, address(this), uint256(int256(amount0))
+                );
+            }
+        } else {
+            if (amount0 < 0) {
+                IERC20(token0).transfer(recipient, uint256(-int256(amount0)));
+                IERC20(token1).transferFrom(
+                    msg.sender, address(this), uint256(int256(amount1))
+                );
+            }
+        }
+    }
 }

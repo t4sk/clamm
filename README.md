@@ -14,6 +14,7 @@ Topics
 -   getNextSqrtPriceFromAmount0RoundingUp(
 -   getNextSqrtPriceFromAmount1RoundingDown
 -   why `fee = amountIN * fee / (1 - fee)`
+-   nextInitializedTickWithinOneWord
 
 ### omit
 

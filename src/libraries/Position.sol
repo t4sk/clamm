@@ -13,14 +13,12 @@ library Position {
         uint128 tokensOwed1;
     }
 
-    function get(
-        mapping(bytes32 => Info) storage self,
-        address owner,
-        int24 tickLower,
-        int24 tickUpper
-    ) internal view returns (Info storage position) {
-        position =
-            self[keccak256(abi.encodePacked(owner, tickLower, tickUpper))];
+    function get(mapping(bytes32 => Info) storage self, address owner, int24 tickLower, int24 tickUpper)
+        internal
+        view
+        returns (Info storage position)
+    {
+        position = self[keccak256(abi.encodePacked(owner, tickLower, tickUpper))];
     }
 
     function update(Info storage self, int128 liquidityDelta) internal {

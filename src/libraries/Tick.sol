@@ -18,11 +18,7 @@ library Tick {
         bool initialized;
     }
 
-    function tickSpacingToMaxLiquidityPerTick(int24 tickSpacing)
-        internal
-        pure
-        returns (uint128)
-    {
+    function tickSpacingToMaxLiquidityPerTick(int24 tickSpacing) internal pure returns (uint128) {
         // Round down to a multiple of tick spacing
         int24 minTick = (TickMath.MIN_TICK / tickSpacing) * tickSpacing;
         int24 maxTick = (TickMath.MAX_TICK / tickSpacing) * tickSpacing;
@@ -61,9 +57,7 @@ library Tick {
         info.liquidityGross = liquidityGrossAfter;
 
         // TODO: why substract?
-        info.liquidityNet = upper
-            ? info.liquidityNet - liquidityDelta
-            : info.liquidityNet + liquidityDelta;
+        info.liquidityNet = upper ? info.liquidityNet - liquidityDelta : info.liquidityNet + liquidityDelta;
     }
 
     function clear(mapping(int24 => Info) storage self, int24 tick) internal {

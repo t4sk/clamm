@@ -37,7 +37,7 @@ library TickBitmap {
 
         if (lte) {
             // Search lesser or equal tick = bit to the right of current bit position
-            (int16 wordPos, uint8 bitPos) = position(compressed + 1);
+            (int16 wordPos, uint8 bitPos) = position(compressed);
 
             // All 1s at or to the right of bitPos
             uint256 mask = (1 << bitPos) - 1 + (1 << bitPos);

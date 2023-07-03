@@ -344,7 +344,35 @@ contract CLAMM {
 
             // TODO: fee
 
-            // TODO: update tick
+            // shift tick if we reached the next price
+            if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
+                if (step.initialized) {
+                    // TODO: ticks.cross
+                    int128 liquidityNet = 0;
+
+                    state.liquidity = liquidityNet < 0
+                        ? state.liquidity - uint128(-liquidityNet)
+                        : state.liquidity + uint128(liquidityNet);
+                }
+                // zeroForOne = true --> tickNext <= state.tick
+                // if tickNext = state.tick --> nextInitializedTick = tickNext, so -1 to get next tick
+                // if tickNext < state.tick --> nextInitializedTick = tickNext, so -1 to get next tick
+                state.tick = zeroForOne ? step.tickNext - 1 : step.tickNext;
+            } else if (state.sqrtPriceX96 != step.sqrtPriceStartX96) {
+                // state.sqrtPriceX96 is still in between 2 initialized ticks
+                // Recompute tick
+                state.tick = TickMath.getTickAtSqrtRatio(state.sqrtPriceX96);
+            }
+        }
+
+        if (state.tick != slot0Start.tick) {
+            (slot0.sqrtPriceX96, slot0.tick) = (state.sqrtPriceX96, state.tick);
+        } else {
+            slot0.sqrtPriceX96 = state.sqrtPriceX96;
+        }
+
+        if (cache.liquidityStart != state.liquidity) {
+            liquidity = state.liquidity;
         }
 
         // TODO: update tick, fee, liquidity

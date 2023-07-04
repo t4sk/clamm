@@ -16,6 +16,7 @@ Topics
 -   why `fee = amountIN * fee / (1 - fee)`
 -   nextInitializedTickWithinOneWord
 -   liquidityNet
+-   fee growth (per liquidity)
 
 ### omit
 

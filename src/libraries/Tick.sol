@@ -18,7 +18,11 @@ library Tick {
         bool initialized;
     }
 
-    function tickSpacingToMaxLiquidityPerTick(int24 tickSpacing) internal pure returns (uint128) {
+    function tickSpacingToMaxLiquidityPerTick(int24 tickSpacing)
+        internal
+        pure
+        returns (uint128)
+    {
         // Round down to a multiple of tick spacing
         int24 minTick = (TickMath.MIN_TICK / tickSpacing) * tickSpacing;
         int24 maxTick = (TickMath.MAX_TICK / tickSpacing) * tickSpacing;
@@ -26,12 +30,60 @@ library Tick {
         return type(uint128).max / numTicks;
     }
 
-    // TODO: fees
+    function getFeeGrowthInside(
+        mapping(int24 => Info) storage self,
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickCurrent,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
+    )
+        internal
+        view
+        returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128)
+    {
+        Info storage lower = self[tickLower];
+        Info storage upper = self[tickUpper];
+
+        // Calculate fee growth below
+        uint256 feeGrowthBelow0X128;
+        uint256 feeGrowthBelow1X128;
+        if (tickLower <= tickCurrent) {
+            feeGrowthBelow0X128 = lower.feeGrowthOutside0X128;
+            feeGrowthBelow1X128 = lower.feeGrowthOutside1X128;
+        } else {
+            feeGrowthBelow0X128 =
+                feeGrowthGlobal0X128 - lower.feeGrowthOutside0X128;
+            feeGrowthBelow1X128 =
+                feeGrowthGlobal1X128 - lower.feeGrowthOutside1X128;
+        }
+
+        // Calculate fee growth above
+        uint256 feeGrowthAbove0X128;
+        uint256 feeGrowthAbove1X128;
+        if (tickCurrent < tickUpper) {
+            feeGrowthAbove0X128 = upper.feeGrowthOutside0X128;
+            feeGrowthAbove1X128 = upper.feeGrowthOutside1X128;
+        } else {
+            feeGrowthAbove0X128 =
+                feeGrowthGlobal0X128 - upper.feeGrowthOutside0X128;
+            feeGrowthAbove1X128 =
+                feeGrowthGlobal1X128 - upper.feeGrowthOutside1X128;
+        }
+
+        feeGrowthInside0X128 =
+            feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
+        feeGrowthInside1X128 =
+            feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+    }
+
     function update(
         mapping(int24 => Info) storage self,
         int24 tick,
         int24 tickCurrent,
         int128 liquidityDelta,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128,
         // true if updating position's upper tick
         bool upper,
         uint128 maxLiquidity
@@ -51,6 +103,11 @@ library Tick {
         flipped = (liquidityGrossBefore == 0) != (liquidityGrossAfter == 0);
 
         if (liquidityGrossBefore == 0) {
+            // TODO: what?
+            if (tick <= tickCurrent) {
+                info.feeGrowthOutside0X128 = feeGrowthGlobal0X128;
+                info.feeGrowthOutside1X128 = feeGrowthGlobal1X128;
+            }
             info.initialized = true;
         }
 
@@ -61,7 +118,9 @@ library Tick {
         //   +       -
         //   ----> one for zero +
         //   <---- zero for one -
-        info.liquidityNet = upper ? info.liquidityNet - liquidityDelta : info.liquidityNet + liquidityDelta;
+        info.liquidityNet = upper
+            ? info.liquidityNet - liquidityDelta
+            : info.liquidityNet + liquidityDelta;
     }
 
     function clear(mapping(int24 => Info) storage self, int24 tick) internal {

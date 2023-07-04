@@ -43,6 +43,8 @@ contract CLAMM {
     uint128 public immutable maxLiquidityPerTick;
 
     Slot0 public slot0;
+    uint256 public feeGrowthGlobal0X128;
+    uint256 public feeGrowthGlobal1X128;
     uint128 public liquidity;
     mapping(int24 => Tick.Info) public ticks;
     mapping(int16 => uint256) public tickBitmap;
@@ -55,7 +57,12 @@ contract CLAMM {
         slot0.unlocked = true;
     }
 
-    constructor(address _token0, address _token1, uint24 _fee, int24 _tickSpacing) {
+    constructor(
+        address _token0,
+        address _token1,
+        uint24 _fee,
+        int24 _tickSpacing
+    ) {
         require(_token0 != address(0), "token 0 = zero address");
         require(_token0 < _token1, "token 0 >= token 1");
 
@@ -86,7 +93,13 @@ contract CLAMM {
 
         Slot0 memory _slot0 = slot0;
 
-        position = _updatePosition(params.owner, params.tickLower, params.tickUpper, params.liquidityDelta, _slot0.tick);
+        position = _updatePosition(
+            params.owner,
+            params.tickLower,
+            params.tickUpper,
+            params.liquidityDelta,
+            _slot0.tick
+        );
 
         // Get amount 0 and amount 1
         // token 1 | token 0
@@ -103,10 +116,14 @@ contract CLAMM {
             } else if (_slot0.tick < params.tickUpper) {
                 // Calculate amount 0 and amount 1
                 amount0 = SqrtPriceMath.getAmount0Delta(
-                    _slot0.sqrtPriceX96, TickMath.getSqrtRatioAtTick(params.tickUpper), params.liquidityDelta
+                    _slot0.sqrtPriceX96,
+                    TickMath.getSqrtRatioAtTick(params.tickUpper),
+                    params.liquidityDelta
                 );
                 amount1 = SqrtPriceMath.getAmount1Delta(
-                    TickMath.getSqrtRatioAtTick(params.tickLower), _slot0.sqrtPriceX96, params.liquidityDelta
+                    TickMath.getSqrtRatioAtTick(params.tickLower),
+                    _slot0.sqrtPriceX96,
+                    params.liquidityDelta
                 );
 
                 liquidity = params.liquidityDelta < 0
@@ -123,19 +140,39 @@ contract CLAMM {
         }
     }
 
-    function _updatePosition(address owner, int24 tickLower, int24 tickUpper, int128 liquidityDelta, int24 tick)
-        private
-        returns (Position.Info storage position)
-    {
+    function _updatePosition(
+        address owner,
+        int24 tickLower,
+        int24 tickUpper,
+        int128 liquidityDelta,
+        int24 tick
+    ) private returns (Position.Info storage position) {
         position = positions.get(owner, tickLower, tickUpper);
 
-        // TODO: fees
+        uint256 _feeGrowthGlobal0X128 = feeGrowthGlobal0X128;
+        uint256 _feeGrowthGlobal1X128 = feeGrowthGlobal1X128;
 
         bool flippedLower;
         bool flippedUpper;
         if (liquidityDelta != 0) {
-            flippedLower = ticks.update(tickLower, tick, liquidityDelta, false, maxLiquidityPerTick);
-            flippedUpper = ticks.update(tickUpper, tick, liquidityDelta, true, maxLiquidityPerTick);
+            flippedLower = ticks.update(
+                tickLower,
+                tick,
+                liquidityDelta,
+                _feeGrowthGlobal0X128,
+                _feeGrowthGlobal1X128,
+                false,
+                maxLiquidityPerTick
+            );
+            flippedUpper = ticks.update(
+                tickUpper,
+                tick,
+                liquidityDelta,
+                _feeGrowthGlobal0X128,
+                _feeGrowthGlobal1X128,
+                true,
+                maxLiquidityPerTick
+            );
 
             if (flippedLower) {
                 tickBitmap.flipTick(tickLower, tickSpacing);
@@ -145,7 +182,18 @@ contract CLAMM {
             }
         }
 
-        position.update(liquidityDelta);
+        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = ticks
+            .getFeeGrowthInside(
+            tickLower,
+            tickUpper,
+            tick,
+            _feeGrowthGlobal0X128,
+            _feeGrowthGlobal1X128
+        );
+
+        position.update(
+            liquidityDelta, feeGrowthInside0X128, feeGrowthInside1X128
+        );
 
         // Liquidity decreased and tick was flipped = liquidity after is 0
         if (liquidityDelta < 0) {
@@ -158,11 +206,12 @@ contract CLAMM {
         }
     }
 
-    function mint(address recipient, int24 tickLower, int24 tickUpper, uint128 amount)
-        external
-        lock
-        returns (uint256 amount0, uint256 amount1)
-    {
+    function mint(
+        address recipient,
+        int24 tickLower,
+        int24 tickUpper,
+        uint128 amount
+    ) external lock returns (uint256 amount0, uint256 amount1) {
         require(amount > 0, "amount = 0");
 
         (, int256 amount0Int, int256 amount1Int) = _modifyPosition(
@@ -193,10 +242,15 @@ contract CLAMM {
         uint128 amount0Requested,
         uint128 amount1Requested
     ) external lock returns (uint128 amount0, uint128 amount1) {
-        Position.Info storage position = positions.get(msg.sender, tickLower, tickUpper);
+        Position.Info storage position =
+            positions.get(msg.sender, tickLower, tickUpper);
 
-        amount0 = amount0Requested > position.tokensOwed0 ? position.tokensOwed0 : amount0Requested;
-        amount1 = amount1Requested > position.tokensOwed1 ? position.tokensOwed1 : amount1Requested;
+        amount0 = amount0Requested > position.tokensOwed0
+            ? position.tokensOwed0
+            : amount0Requested;
+        amount1 = amount1Requested > position.tokensOwed1
+            ? position.tokensOwed1
+            : amount1Requested;
 
         if (amount0 > 0) {
             position.tokensOwed0 -= amount0;
@@ -213,7 +267,8 @@ contract CLAMM {
         lock
         returns (uint256 amount0, uint256 amount1)
     {
-        (Position.Info storage position, int256 amount0Int, int256 amount1Int) = _modifyPosition(
+        (Position.Info storage position, int256 amount0Int, int256 amount1Int) =
+        _modifyPosition(
             ModifyPositionParams({
                 owner: msg.sender,
                 tickLower: tickLower,
@@ -226,8 +281,10 @@ contract CLAMM {
         amount1 = uint256(-amount1Int);
 
         if (amount0 > 0 || amount1 > 0) {
-            (position.tokensOwed0, position.tokensOwed1) =
-                (position.tokensOwed0 + uint128(amount0), position.tokensOwed1 + uint128(amount1));
+            (position.tokensOwed0, position.tokensOwed1) = (
+                position.tokensOwed0 + uint128(amount0),
+                position.tokensOwed1 + uint128(amount1)
+            );
         }
         // NOTE: no transfer of tokens
     }
@@ -262,11 +319,12 @@ contract CLAMM {
         uint256 feeAmount;
     }
 
-    function swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96)
-        external
-        lock
-        returns (int256 amount0, int256 amount1)
-    {
+    function swap(
+        address recipient,
+        bool zeroForOne,
+        int256 amountSpecified,
+        uint160 sqrtPriceLimitX96
+    ) external lock returns (int256 amount0, int256 amount1) {
         require(amountSpecified != 0);
 
         Slot0 memory slot0Start = slot0;
@@ -277,8 +335,10 @@ contract CLAMM {
         // <-- zero for one
         require(
             zeroForOne
-                ? sqrtPriceLimitX96 < slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 > TickMath.MIN_SQRT_RATIO
-                : sqrtPriceLimitX96 > slot0Start.sqrtPriceX96 && sqrtPriceLimitX96 < TickMath.MAX_SQRT_RATIO,
+                ? sqrtPriceLimitX96 < slot0Start.sqrtPriceX96
+                    && sqrtPriceLimitX96 > TickMath.MIN_SQRT_RATIO
+                : sqrtPriceLimitX96 > slot0Start.sqrtPriceX96
+                    && sqrtPriceLimitX96 < TickMath.MAX_SQRT_RATIO,
             "invalid sqrt price limit"
         );
 
@@ -298,12 +358,16 @@ contract CLAMM {
             liquidity: cache.liquidityStart
         });
 
-        while (state.amountSpecifiedRemaining != 0 && state.sqrtPriceX96 != sqrtPriceLimitX96) {
+        while (
+            state.amountSpecifiedRemaining != 0
+                && state.sqrtPriceX96 != sqrtPriceLimitX96
+        ) {
             StepComputations memory step;
 
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 
-            (step.tickNext, step.initialized) = tickBitmap.nextInitializedTickWithinOneWord(
+            (step.tickNext, step.initialized) = tickBitmap
+                .nextInitializedTickWithinOneWord(
                 state.tick,
                 tickSpacing,
                 // zero for one --> price decreases --> lte
@@ -320,13 +384,16 @@ contract CLAMM {
 
             step.sqrtPriceNextX96 = TickMath.getSqrtRatioAtTick(step.tickNext);
 
-            (state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount) = SwapMath.computeSwapStep(
+            (state.sqrtPriceX96, step.amountIn, step.amountOut, step.feeAmount)
+            = SwapMath.computeSwapStep(
                 state.sqrtPriceX96,
                 // zero for one --> max(next, limit)
                 // one for zero --> min(next, limit)
-                (zeroForOne ? step.sqrtPriceNextX96 < sqrtPriceLimitX96 : step.sqrtPriceNextX96 > sqrtPriceLimitX96)
-                    ? sqrtPriceLimitX96
-                    : step.sqrtPriceNextX96,
+                (
+                    zeroForOne
+                        ? step.sqrtPriceNextX96 < sqrtPriceLimitX96
+                        : step.sqrtPriceNextX96 > sqrtPriceLimitX96
+                ) ? sqrtPriceLimitX96 : step.sqrtPriceNextX96,
                 state.liquidity,
                 state.amountSpecifiedRemaining,
                 fee
@@ -334,12 +401,14 @@ contract CLAMM {
 
             if (exactInput) {
                 // Decreases to 0
-                state.amountSpecifiedRemaining -= (step.amountIn + step.feeAmount).toInt256();
+                state.amountSpecifiedRemaining -=
+                    (step.amountIn + step.feeAmount).toInt256();
                 state.amountCalculated -= step.amountOut.toInt256();
             } else {
                 // Increases to 0
                 state.amountSpecifiedRemaining += step.amountOut.toInt256();
-                state.amountCalculated += (step.amountIn + step.feeAmount).toInt256();
+                state.amountCalculated +=
+                    (step.amountIn + step.feeAmount).toInt256();
             }
 
             // TODO: fee
@@ -394,18 +463,28 @@ contract CLAMM {
         //    false     |    false    | amount 0 = specified - remaining (< 0)
         //              |             | amount 1 = calculated            (> 0)
         (amount0, amount1) = zeroForOne == exactInput
-            ? (amountSpecified - state.amountSpecifiedRemaining, state.amountCalculated)
-            : (state.amountCalculated, amountSpecified - state.amountSpecifiedRemaining);
+            ? (
+                amountSpecified - state.amountSpecifiedRemaining,
+                state.amountCalculated
+            )
+            : (
+                state.amountCalculated,
+                amountSpecified - state.amountSpecifiedRemaining
+            );
 
         if (zeroForOne) {
             if (amount1 < 0) {
                 IERC20(token1).transfer(recipient, uint256(-amount1));
-                IERC20(token0).transferFrom(msg.sender, address(this), uint256(amount0));
+                IERC20(token0).transferFrom(
+                    msg.sender, address(this), uint256(amount0)
+                );
             }
         } else {
             if (amount0 < 0) {
                 IERC20(token0).transfer(recipient, uint256(-amount0));
-                IERC20(token1).transferFrom(msg.sender, address(this), uint256(amount1));
+                IERC20(token1).transferFrom(
+                    msg.sender, address(this), uint256(amount1)
+                );
             }
         }
     }

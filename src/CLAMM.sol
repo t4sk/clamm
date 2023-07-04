@@ -347,8 +347,16 @@ contract CLAMM {
             // shift tick if we reached the next price
             if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
                 if (step.initialized) {
-                    // TODO: ticks.cross
-                    int128 liquidityNet = 0;
+                    int128 liquidityNet = ticks.cross(
+                        step.tickNext,
+                        // TODO: fee
+                        0,
+                        0
+                    );
+
+                    if (zeroForOne) {
+                        liquidityNet = -liquidityNet;
+                    }
 
                     state.liquidity = liquidityNet < 0
                         ? state.liquidity - uint128(-liquidityNet)

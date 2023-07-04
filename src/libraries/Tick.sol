@@ -56,11 +56,26 @@ library Tick {
 
         info.liquidityGross = liquidityGrossAfter;
 
-        // TODO: why substract?
+        // lower    upper
+        //   |       |
+        //   +       -
+        //   ----> one for zero +
+        //   <---- zero for one -
         info.liquidityNet = upper ? info.liquidityNet - liquidityDelta : info.liquidityNet + liquidityDelta;
     }
 
     function clear(mapping(int24 => Info) storage self, int24 tick) internal {
         delete self[tick];
+    }
+
+    function cross(
+        mapping(int24 => Info) storage self,
+        int24 tick,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
+    ) internal returns (int128 liquidityNet) {
+        Info storage info = self[tick];
+        // TODO: fee
+        liquidityNet = info.liquidityNet;
     }
 }

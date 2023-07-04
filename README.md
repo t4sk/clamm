@@ -15,6 +15,7 @@ Topics
 -   getNextSqrtPriceFromAmount1RoundingDown
 -   why `fee = amountIN * fee / (1 - fee)`
 -   nextInitializedTickWithinOneWord
+-   liquidityNet
 
 ### omit
 

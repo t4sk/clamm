@@ -9,6 +9,8 @@ import "./libraries/Tick.sol";
 import "./libraries/TickBitmap.sol";
 import "./libraries/SqrtPriceMath.sol";
 import "./libraries/SwapMath.sol";
+import "./libraries/FullMath.sol";
+import "./libraries/FixedPoint128.sol";
 
 // slot 0 = 32 bytes
 // 2**256 = 32 bytes
@@ -353,8 +355,10 @@ contract CLAMM {
             amountCalculated: 0,
             sqrtPriceX96: slot0Start.sqrtPriceX96,
             tick: slot0Start.tick,
-            // TODO: fees
-            feeGrowthGlobalX128: 0,
+            // Fee on token in
+            feeGrowthGlobalX128: zeroForOne
+                ? feeGrowthGlobal0X128
+                : feeGrowthGlobal1X128,
             liquidity: cache.liquidityStart
         });
 
@@ -411,16 +415,24 @@ contract CLAMM {
                     (step.amountIn + step.feeAmount).toInt256();
             }
 
-            // TODO: fee
+            if (state.liquidity > 0) {
+                // fee growth += fee amount * (1 << 128) / liquidity
+                state.feeGrowthGlobalX128 += FullMath.mulDiv(
+                    step.feeAmount, FixedPoint128.Q128, state.liquidity
+                );
+            }
 
             // shift tick if we reached the next price
             if (state.sqrtPriceX96 == step.sqrtPriceNextX96) {
                 if (step.initialized) {
                     int128 liquidityNet = ticks.cross(
                         step.tickNext,
-                        // TODO: fee
-                        0,
-                        0
+                        zeroForOne
+                            ? state.feeGrowthGlobalX128
+                            : feeGrowthGlobal0X128,
+                        zeroForOne
+                            ? feeGrowthGlobal1X128
+                            : state.feeGrowthGlobalX128
                     );
 
                     if (zeroForOne) {
@@ -448,11 +460,18 @@ contract CLAMM {
             slot0.sqrtPriceX96 = state.sqrtPriceX96;
         }
 
+        // Update liquidity if it changed
         if (cache.liquidityStart != state.liquidity) {
             liquidity = state.liquidity;
         }
 
-        // TODO: update tick, fee, liquidity
+        // Update fee growth
+        if (zeroForOne) {
+            feeGrowthGlobal0X128 = state.feeGrowthGlobalX128;
+        } else {
+            feeGrowthGlobal1X128 = state.feeGrowthGlobalX128;
+        }
+
         // zero for one | exact input |
         //    true      |    true     | amount 0 = specified - remaining (> 0)
         //              |             | amount 1 = calculated            (< 0)

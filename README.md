@@ -17,6 +17,7 @@ Topics
 -   nextInitializedTickWithinOneWord
 -   liquidityNet
 -   fee growth (per liquidity)
+-   how does burn update tokensOwed
 
 ### omit
 

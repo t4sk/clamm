@@ -134,7 +134,10 @@ library Tick {
         uint256 feeGrowthGlobal1X128
     ) internal returns (int128 liquidityNet) {
         Info storage info = self[tick];
-        // TODO: fee
+        info.feeGrowthOutside0X128 =
+            feeGrowthGlobal0X128 - info.feeGrowthOutside0X128;
+        info.feeGrowthOutside1X128 =
+            feeGrowthGlobal1X128 - info.feeGrowthOutside1X128;
         liquidityNet = info.liquidityNet;
     }
 }

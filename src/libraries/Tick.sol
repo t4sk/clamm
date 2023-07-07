@@ -103,7 +103,7 @@ library Tick {
         flipped = (liquidityGrossBefore == 0) != (liquidityGrossAfter == 0);
 
         if (liquidityGrossBefore == 0) {
-            // TODO: what?
+            // TODO: why initialize below tick?
             if (tick <= tickCurrent) {
                 info.feeGrowthOutside0X128 = feeGrowthGlobal0X128;
                 info.feeGrowthOutside1X128 = feeGrowthGlobal1X128;

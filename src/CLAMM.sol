@@ -80,6 +80,10 @@ contract CLAMM {
         slot0 = Slot0({sqrtPriceX96: sqrtPriceX96, tick: tick, unlocked: true});
     }
 
+    function getSlot0() external view returns (Slot0 memory) {
+        return slot0;
+    }
+
     struct ModifyPositionParams {
         address owner;
         int24 tickLower;

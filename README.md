@@ -19,7 +19,7 @@ Topics
 -   fee growth (per liquidity)
 -   how does burn update tokensOwed
 
-TODO: - test
+TODO: - fees, sort topics, code review, test
 
 ### omit
 

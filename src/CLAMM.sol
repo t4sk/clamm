@@ -2,15 +2,15 @@
 pragma solidity 0.8.19;
 
 import "./interfaces/IERC20.sol";
-import "./libraries/SafeCast.sol";
-import "./libraries/TickMath.sol";
-import "./libraries/Position.sol";
-import "./libraries/Tick.sol";
-import "./libraries/TickBitmap.sol";
-import "./libraries/SqrtPriceMath.sol";
-import "./libraries/SwapMath.sol";
-import "./libraries/FullMath.sol";
-import "./libraries/FixedPoint128.sol";
+import "./lib/SafeCast.sol";
+import "./lib/TickMath.sol";
+import "./lib/Position.sol";
+import "./lib/Tick.sol";
+import "./lib/TickBitmap.sol";
+import "./lib/SqrtPriceMath.sol";
+import "./lib/SwapMath.sol";
+import "./lib/FullMath.sol";
+import "./lib/FixedPoint128.sol";
 
 // slot 0 = 32 bytes
 // 2**256 = 32 bytes

@@ -80,10 +80,6 @@ contract CLAMM {
         slot0 = Slot0({sqrtPriceX96: sqrtPriceX96, tick: tick, unlocked: true});
     }
 
-    function getSlot0() external view returns (Slot0 memory) {
-        return slot0;
-    }
-
     struct ModifyPositionParams {
         address owner;
         int24 tickLower;
@@ -251,6 +247,7 @@ contract CLAMM {
         Position.Info storage position =
             positions.get(msg.sender, tickLower, tickUpper);
 
+        // min(amount owed, amount request)
         amount0 = amount0Requested > position.tokensOwed0
             ? position.tokensOwed0
             : amount0Requested;
@@ -510,5 +507,18 @@ contract CLAMM {
                 );
             }
         }
+    }
+
+    // Test helper functions
+    function getSlot0() external view returns (Slot0 memory) {
+        return slot0;
+    }
+
+    function getPosition(address owner, int24 tickLower, int24 tickUpper)
+        external
+        view
+        returns (Position.Info memory)
+    {
+        return positions.get(owner, tickLower, tickUpper);
     }
 }

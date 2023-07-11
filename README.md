@@ -1,8 +1,28 @@
-Topics
+# Topics
 
--   mint, burn, collect, swap, fees, test
+-   ### Setup
 
--   constructor, initialize, mint, burn, swap, collect
+```shell
+forge init clamm
+forge build
+forge fmt
+```
+
+-   ### Constructor
+    -   `constructor`
+    -   Tick and tick spacing
+-   ### Initialize
+    -   `initialize`
+    -   `sqrtPriceX96`
+    -   `getTickAtSqrtRatio`
+    -   `slot0`
+-   ### Mint
+-   ### Burn
+-   ### Collect
+-   ### Swap
+-   ### Fees
+-   ### Test
+
 -   sqrtPriceX96
 -   get tick from sqrt price x 96
 -   get price from sqrt price x 96

@@ -73,8 +73,8 @@ contract ClammTest is Test {
             (uint256 amount0, uint256 amount1) =
                 clamm.mint(users[0], tickLower, tickUpper, liquidity);
 
-            console.log("add liquidity - amount0:", floor(amount0, 1e18));
-            console.log("add liquidity - amount1:", floor(amount1, 1e6));
+            console.log("add liquidity - amount 0:", floor(amount0, 1e18));
+            console.log("add liquidity - amount 1:", floor(amount1, 1e6));
         }
 
         // Swap (1 for 0, exact input) //
@@ -121,11 +121,9 @@ contract ClammTest is Test {
             (uint256 a0Burned, uint256 a1Burned) =
                 clamm.burn(tickLower, tickUpper, pos.liquidity);
 
-            console.log("remove liquidity - amount0:", a0Burned);
-            console.log("remove liquidity - amount1:", a1Burned);
-        }
+            console.log("remove liquidity - amount 0:", a0Burned);
+            console.log("remove liquidity - amount 1:", a1Burned);
 
-        {
             vm.prank(users[0]);
             (uint128 a0Collected, uint128 a1Collected) = clamm.collect(
                 users[1],
@@ -135,12 +133,170 @@ contract ClammTest is Test {
                 type(uint128).max
             );
 
-            console.log("collect - amount0:", a0Collected);
-            console.log("collect - amount1:", a1Collected);
+            console.log("collect - amount 0:", a0Collected);
+            console.log("collect - amount 1:", a1Collected);
+
+            console.log("fee 0:", a0Collected - a0Burned);
+            console.log("fee 1:", a1Collected - a1Burned);
         }
     }
 
-    // TODO: test multi liquidity swaps
+    struct AddLiquidityParams {
+        address user;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+    }
+
+    // TODO: test multi liquidity swaps (HERE)
+    function testMultiPositionsSwap() public {
+        // Add liquidity //
+        Slot0 memory slot0 = clamm.getSlot0();
+
+        AddLiquidityParams[2] memory addParams = [
+            AddLiquidityParams({
+                user: users[0],
+                tickLower: (slot0.tick - TICK_SPACING) / TICK_SPACING * TICK_SPACING,
+                tickUpper: (slot0.tick + TICK_SPACING) / TICK_SPACING * TICK_SPACING,
+                amount0Desired: 1_000_000 * 1e18,
+                amount1Desired: 1_000_000 * 1e6
+            }),
+            AddLiquidityParams({
+                user: users[0],
+                tickLower: (slot0.tick - 3 * TICK_SPACING) / TICK_SPACING * TICK_SPACING,
+                tickUpper: (slot0.tick + 3 * TICK_SPACING) / TICK_SPACING * TICK_SPACING,
+                amount0Desired: 1_000_000 * 1e18,
+                amount1Desired: 1_000_000 * 1e6
+            })
+        ];
+
+        {
+            console.log("--- Add liquidity ---");
+
+            for (uint256 i = 0; i < addParams.length; i++) {
+                uint160 sqrtRatioLowerX96 =
+                    TickMath.getSqrtRatioAtTick(addParams[i].tickLower);
+                uint160 sqrtRatioUpperX96 =
+                    TickMath.getSqrtRatioAtTick(addParams[i].tickUpper);
+
+                uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+                    slot0.sqrtPriceX96,
+                    sqrtRatioLowerX96,
+                    sqrtRatioUpperX96,
+                    addParams[i].amount0Desired,
+                    addParams[i].amount1Desired
+                );
+
+                vm.prank(addParams[i].user);
+
+                (uint256 amount0, uint256 amount1) = clamm.mint(
+                    users[0],
+                    addParams[i].tickLower,
+                    addParams[i].tickUpper,
+                    liquidity
+                );
+
+                console.log("add liquidity - amount 0:", floor(amount0, 1e18));
+                console.log("add liquidity - amount 1:", floor(amount1, 1e6));
+
+                if (addParams[i].tickLower >= 0) {
+                    console.log("tick lower:", uint24(addParams[i].tickLower));
+                } else {
+                    console.log(
+                        "tick lower: -", uint24(-addParams[i].tickLower)
+                    );
+                }
+                if (addParams[i].tickUpper >= 0) {
+                    console.log(
+                        "tick tickUpper:", uint24(addParams[i].tickUpper)
+                    );
+                } else {
+                    console.log(
+                        "tick tickUpper: -", uint24(-addParams[i].tickUpper)
+                    );
+                }
+
+                console.log("liquidity:", liquidity);
+            }
+        }
+
+        // Swap (1 for 0, exact input) //
+        {
+            console.log("--- Swap ---");
+
+            int256 amountIn = 1e9 * 1e6;
+
+            vm.prank(users[1]);
+            (int256 amount0Delta, int256 amount1Delta) = clamm.swap(
+                users[1], false, amountIn, TickMath.MAX_SQRT_RATIO - 1
+            );
+
+            // Print amount 0 and 1 delta, split into whole num and decimal parts
+            // + amount in
+            // - amount out
+            if (amount0Delta < 0) {
+                uint256 d = uint256(-amount0Delta);
+                console.log(
+                    "swap - amount 0 out:", floor(d, 1e18), rem(d, 1e18, 1e15)
+                );
+            } else {
+                uint256 d = uint256(amount0Delta);
+                console.log(
+                    "swap - amount 0 in:", floor(d, 1e18), rem(d, 1e18, 1e15)
+                );
+            }
+            if (amount1Delta < 0) {
+                uint256 d = uint256(-amount1Delta);
+                console.log(
+                    "swap - amount 1 out:", floor(d, 1e6), rem(d, 1e6, 1e3)
+                );
+            } else {
+                uint256 d = uint256(amount1Delta);
+                console.log(
+                    "swap - amount 1 in:", floor(d, 1e6), rem(d, 1e6, 1e3)
+                );
+            }
+        }
+
+        // Burn + collect //
+        {
+            console.log("--- Burn + collect ---");
+
+            for (uint256 i = 0; i < addParams.length; i++) {
+                Position.Info memory pos = clamm.getPosition(
+                    addParams[i].user,
+                    addParams[i].tickLower,
+                    addParams[i].tickUpper
+                );
+
+                vm.prank(addParams[i].user);
+                (uint256 a0Burned, uint256 a1Burned) = clamm.burn(
+                    addParams[i].tickLower,
+                    addParams[i].tickUpper,
+                    pos.liquidity
+                );
+
+                console.log("remove liquidity - amount 0:", a0Burned);
+                console.log("remove liquidity - amount 1:", a1Burned);
+
+                vm.prank(addParams[i].user);
+                (uint128 a0Collected, uint128 a1Collected) = clamm.collect(
+                    addParams[i].user,
+                    addParams[i].tickLower,
+                    addParams[i].tickUpper,
+                    type(uint128).max,
+                    type(uint128).max
+                );
+
+                console.log("collect - amount 0:", a0Collected);
+                console.log("collect - amount 1:", a1Collected);
+
+                console.log("fee 0:", a0Collected - a0Burned);
+                console.log("fee 1:", a1Collected - a1Burned);
+            }
+        }
+    }
 }
 
 function floor(uint256 x, uint256 d) returns (uint256) {

@@ -29,7 +29,7 @@ library Tick {
         // Round up num ticks
         uint24 numTicks = uint24((maxTick - minTick) / tickSpacing) + 1;
         // Max liquidity = max(uint128) = 2**128 - 1
-        // Max liquidity / num of ticks 
+        // Max liquidity / num of ticks
         return type(uint128).max / numTicks;
     }
 

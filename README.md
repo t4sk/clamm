@@ -11,10 +11,10 @@ forge fmt
 -   ### Constructor
     -   `constructor`
     -   Tick and tick spacing
+    -   `tickSpacingToMaxLiquidityPerTick`
 -   ### Initialize
     -   `initialize`
-    -   `sqrtPriceX96`
-    -   `getTickAtSqrtRatio`
+    -   `sqrtPriceX96`, `getTickAtSqrtRatio`, calculate tick from `sqrtPriceX96`
     -   `slot0`
 -   ### Mint
 -   ### Burn
@@ -40,9 +40,15 @@ forge fmt
 -   fee growth (per liquidity)
 -   how does burn update tokensOwed
 
-TODO: - fees, sort topics, code review, test
+TODO: - fees, sort topics
 
-### omit
+### Uni V3 pool
+
+ETH / USDC 0.05% pool Arbitrum
+
+0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443
+
+### Omit
 
 -   price oracle
 -   protocol fee

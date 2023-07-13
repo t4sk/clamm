@@ -149,7 +149,6 @@ contract ClammTest is Test {
         uint256 amount1Desired;
     }
 
-    // TODO: test multi liquidity swaps (HERE)
     function testMultiPositionsSwap() public {
         // Add liquidity //
         Slot0 memory slot0 = clamm.getSlot0();

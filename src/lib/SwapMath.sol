@@ -122,7 +122,9 @@ library SwapMath {
             // TODO: what? - Take the remainder of the maximum input as fee
             feeAmount = uint256(amountRemaining) - amountIn;
         } else {
-            // TODO: why fee = amountIN * fee / (1 - fee)
+            // TODO: why fee = amountIn * fee / (1 - fee)
+            // a_in = a * (1 - f)
+            // F = a_in * f / (1 - f) = a * f?
             feeAmount =
                 FullMath.mulDivRoundingUp(amountIn, feePips, 1e6 - feePips);
         }

@@ -26,13 +26,17 @@ forge fmt
 
 -   ### Constructor
     -   [ ] `constructor`
-    -   [ ] Price, tick and tick spacing
-    -   [ ] `tickSpacingToMaxLiquidityPerTick`
+        -   [ ] Price, tick and tick spacing
+        -   [ ] `tickSpacingToMaxLiquidityPerTick`
 -   ### Initialize
     -   [ ] `initialize`
-    -   [ ] `sqrtPriceX96`, `getTickAtSqrtRatio`, calculate tick from `sqrtPriceX96`
-    -   [ ] `slot0`
+        -   [ ] `sqrtPriceX96`, `getTickAtSqrtRatio`, calculate tick from `sqrtPriceX96`
+        -   [ ] `slot0`
 -   ### Mint
+    -   [ ] `mint`
+        -   [ ] `_modifyPosition`
+            -   [ ] `_updatePosition`
+            -   [ ] Ticks, liquidity, amount 0 and 1 delta, `getSqrtRatioAtTick`
 -   ### Burn
 -   ### Collect
 -   ### Swap

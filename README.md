@@ -1,4 +1,20 @@
-# Topics
+# CLAMM - Concentrated liquidity AMM
+
+### Uni V3 pool
+
+ETH / USDC 0.05% pool Arbitrum
+
+0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443
+
+### Omit
+
+-   Factory
+-   Price oracle
+-   Protocol fee
+-   Flash swap
+-   NFT
+-   Solidity advanced math libraries
+-   Callbacks
 
 -   ### Setup
 
@@ -9,13 +25,13 @@ forge fmt
 ```
 
 -   ### Constructor
-    -   `constructor`
-    -   Price, tick and tick spacing
-    -   `tickSpacingToMaxLiquidityPerTick`
+    -   [ ] `constructor`
+    -   [ ] Price, tick and tick spacing
+    -   [ ] `tickSpacingToMaxLiquidityPerTick`
 -   ### Initialize
-    -   `initialize`
+    -   [ ] `initialize`
     -   [ ] `sqrtPriceX96`, `getTickAtSqrtRatio`, calculate tick from `sqrtPriceX96`
-    -   `slot0`
+    -   [ ] `slot0`
 -   ### Mint
 -   ### Burn
 -   ### Collect
@@ -41,18 +57,3 @@ forge fmt
 -   how does burn update tokensOwed
 
 TODO: - fees, sort topics
-
-### Uni V3 pool
-
-ETH / USDC 0.05% pool Arbitrum
-
-0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443
-
-### Omit
-
--   price oracle
--   protocol fee
--   flash swap
--   nft
--   solidity advanced math libraries
--   Callbacks

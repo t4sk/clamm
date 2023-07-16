@@ -298,11 +298,11 @@ contract ClammTest is Test {
     }
 }
 
-function floor(uint256 x, uint256 d) returns (uint256) {
+function floor(uint256 x, uint256 d) pure returns (uint256) {
     return x / d;
 }
 
-function rem(uint256 x, uint256 d, uint256 p) returns (uint256) {
+function rem(uint256 x, uint256 d, uint256 p) pure returns (uint256) {
     uint256 r = x - (x / d * d);
     return r / p;
 }

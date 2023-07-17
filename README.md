@@ -41,9 +41,13 @@ forge fmt
         -   [ ] `_modifyPosition`
             -   [ ] `_updatePosition`
                 -   [ ] `Tick.update`
-                    -   [ ] Tick and liquidity net
+                    -   [ ] Liquidity, price and token reserves
+                    -   [ ] Liquidity net
             -   [ ] `getSqrtRatioAtTick`
-            -   [ ] Real reserve, liquidity, amount 0 and 1 delta, liquidity delta
+            -   [ ] Curve of real reserves
+            -   [ ] Reserve 0 and reserve 1
+            -   [ ] Liquidity, amount 0 and 1 delta
+            -   [ ] Liquidity delta
 -   ### Burn
 -   ### Collect
 -   ### Swap

@@ -72,3 +72,13 @@ forge fmt
 -   how does burn update tokensOwed
 
 TODO: - fees, sort topics
+
+### Links
+
+https://uniswapv3book.com/
+
+https://blog.uniswap.org/uniswap-v3-math-primer
+
+https://blog.uniswap.org/uniswap-v3-math-primer-2
+
+https://trapdoortech.medium.com/uniswap-deep-dive-into-v3-technical-white-paper-2fe2b5c90d2

@@ -29,9 +29,9 @@ forge fmt
 ```
 
 -   ### Constructor
-    -   [ ] `constructor`
-        -   [ ] Price, tick and tick spacing
-        -   [ ] `tickSpacingToMaxLiquidityPerTick`
+    -   [x] `constructor`
+        -   [x] Price, tick and tick spacing
+        -   [x] `tickSpacingToMaxLiquidityPerTick`
 -   ### Initialize
     -   [ ] `initialize`
         -   [ ] `sqrtPriceX96`, `getTickAtSqrtRatio`, calculate tick from `sqrtPriceX96`

@@ -34,9 +34,9 @@ forge fmt
         -   [x] `tickSpacingToMaxLiquidityPerTick`
 -   ### Initialize
     -   [ ] `initialize`
+        -   [ ] `slot0`
         -   [ ] `sqrtPriceX96`
         -   [ ] `getTickAtSqrtRatio`, calculate tick from `sqrtPriceX96`
-        -   [ ] `slot0`
 -   ### Mint
     -   [ ] `mint`
         -   [ ] `_modifyPosition`

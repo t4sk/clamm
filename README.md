@@ -46,14 +46,28 @@ forge fmt
                     -   [ ] Liquidity net
             -   [ ] `getSqrtRatioAtTick`
             -   [ ] Curve of real reserves
-            -   [ ] Reserve 0 and reserve 1
-            -   [ ] Liquidity, amount 0 and 1 delta
+            -   [ ] Reserve 0 and 1
+            -   [ ] Liquidity
             -   [ ] Liquidity delta
 -   ### Burn
+    -   [ ] `burn`
+        -   [ ] amount 0, amount 1, tokensOwed?
 -   ### Collect
+    -   [ ] `collect`
 -   ### Swap
+    -   [ ] `swap`
+        -   [ ] one tick
+        -   [ ] multi ticks
+            -   [ ] `nextInitializedTickWithInOneWord`
+            -   [ ] `computeSwapStep`
+            -   [ ] `liquidityNet`
 -   ### Fees
+    -   [ ] `feeGrowthGlobal`
+    -   [ ] `tick.cross`
+    -   [ ] `getFeeGrowthInside` (burn + collect to earn fees)
 -   ### Test
+
+TODO: - fees, sort topics
 
 -   sqrtPriceX96
 -   get tick from sqrt price x 96
@@ -71,8 +85,6 @@ forge fmt
 -   liquidityNet
 -   fee growth (per liquidity)
 -   how does burn update tokensOwed
-
-TODO: - fees, sort topics
 
 ### Links
 

@@ -76,6 +76,7 @@ contract CLAMM {
     }
 
     function initialize(uint160 sqrtPriceX96) external {
+        require(slot0.sqrtPriceX96 == 0, "already initialized");
         int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
         slot0 = Slot0({sqrtPriceX96: sqrtPriceX96, tick: tick, unlocked: true});
     }

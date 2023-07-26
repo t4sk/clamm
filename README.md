@@ -41,7 +41,9 @@ forge fmt
     -   [ ] `mint`
         -   [ ] `_modifyPosition`
             -   [ ] `_updatePosition`
-                -   [ ] `Tick.update`
+                -   [ ] `position.get`
+                -   [ ] `positon.update`
+                -   [ ] `ticks.update`
                     -   [ ] Liquidity, price and token reserves
                     -   [ ] Liquidity net
             -   [ ] `getSqrtRatioAtTick`
@@ -58,6 +60,7 @@ forge fmt
     -   [ ] `swap`
         -   [ ] one tick
         -   [ ] multi ticks
+            -   [ ] TODO: TickBitMap, `tickBitMap.flipTick`
             -   [ ] `nextInitializedTickWithInOneWord`
             -   [ ] `computeSwapStep`
             -   [ ] `liquidityNet`

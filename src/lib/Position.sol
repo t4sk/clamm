@@ -35,7 +35,6 @@ library Position {
         Info memory _self = self;
 
         if (liquidityDelta == 0) {
-            // TODO: why?
             // disallow pokes for 0 liquidity positions
             require(_self.liquidity > 0);
         }

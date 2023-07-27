@@ -43,14 +43,16 @@ forge fmt
             -   [ ] `_updatePosition`
                 -   [ ] `position.get`
                 -   [ ] `positon.update`
-                -   [ ] `ticks.update`
+                -   [ ] `ticks.update`, `ticks.clear`
+                    -   [ ] `Tick.Info`
                     -   [ ] Liquidity, price and token reserves
                     -   [ ] Liquidity net
-            -   [ ] `getSqrtRatioAtTick`
-            -   [ ] Curve of real reserves
-            -   [ ] Reserve 0 and 1
-            -   [ ] Liquidity
-            -   [ ] Liquidity delta
+            -   [ ] `getAmount0Delta` and `getAmount1Delta`
+                -   [ ] `getSqrtRatioAtTick`
+                -   [ ] Curve of real reserves
+                -   [ ] Reserve 0 and 1
+                -   [ ] Liquidity
+                -   [ ] Liquidity delta
 -   ### Burn
     -   [ ] `burn`
         -   [ ] amount 0, amount 1, tokensOwed?

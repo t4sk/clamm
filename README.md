@@ -55,7 +55,6 @@ forge fmt
                 -   [ ] Liquidity delta
 -   ### Burn
     -   [ ] `burn`
-        -   [ ] amount 0, amount 1, tokensOwed?
 -   ### Collect
     -   [ ] `collect`
 -   ### Swap

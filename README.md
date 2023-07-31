@@ -41,10 +41,10 @@ forge fmt
     -   [ ] `mint`
         -   [ ] `_modifyPosition`
             -   [ ] `_updatePosition`
-                -   [ ] `position.get`
-                -   [ ] `positon.update`
-                -   [ ] `ticks.update`, `ticks.clear`
-                    -   [ ] `Tick.Info`
+                -   [x] `position.get`
+                -   [x] `positon.update`
+                -   [x] `ticks.update`, `ticks.clear`
+                    -   [x] `Tick.Info`
                     -   [ ] Liquidity, price and token reserves
                     -   [ ] Liquidity net
             -   [ ] `getAmount0Delta` and `getAmount1Delta`

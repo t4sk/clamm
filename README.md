@@ -45,7 +45,7 @@ forge fmt
                 -   [x] `positon.update`
                 -   [x] `ticks.update`, `ticks.clear`
                     -   [x] `Tick.Info`
-                    -   [ ] Liquidity, price and token reserves
+                    -   [x] Liquidity, price and token reserves
                     -   [ ] Liquidity net
             -   [ ] `getAmount0Delta` and `getAmount1Delta`
                 -   [ ] `getSqrtRatioAtTick`
@@ -61,17 +61,17 @@ forge fmt
     -   [ ] `swap`
         -   [ ] one tick
         -   [ ] multi ticks
-            -   [ ] TODO: TickBitMap, `tickBitMap.flipTick`
             -   [ ] `nextInitializedTickWithInOneWord`
+                -   [ ] TickBitMap, `tickBitMap.flipTick`
             -   [ ] `computeSwapStep`
-            -   [ ] `liquidityNet`
+                -   [ ] `sqrtRatioNextX96 = SqrtPriceMath.getNextSqrtPriceFromInput`
+            -   [ ] `ticks.cross`
+                -   [ ] `liquidityNet`
 -   ### Fees
     -   [ ] `feeGrowthGlobal`
     -   [ ] `tick.cross`
     -   [ ] `getFeeGrowthInside` (burn + collect to earn fees)
 -   ### Test
-
-TODO: - fees, sort topics
 
 -   sqrtPriceX96
 -   get tick from sqrt price x 96

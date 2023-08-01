@@ -114,6 +114,10 @@ contract ClammTest is Test {
 
         // Burn + collect //
         {
+            // TODO: fix - Test burn 0
+            // vm.prank(users[0]);
+            // clamm.burn(tickLower, tickUpper, 0);
+
             Position.Info memory pos =
                 clamm.getPosition(users[0], tickLower, tickUpper);
 

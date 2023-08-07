@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import "./BitMath.sol";
 
 library TickBitmap {
-    // TODO: position also valid for tick < 0?
+    // -2**23 <= int24 <= 2**23 - 1
     function position(int24 tick)
         private
         pure

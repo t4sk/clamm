@@ -54,6 +54,7 @@ forge fmt
                 -   [ ] Liquidity delta
                 -   [ ] `getSqrtRatioAtTick`
 -   ### Burn
+    TODO: fix burn 0
     -   [ ] `burn`
 -   ### Collect
     -   [ ] `collect`

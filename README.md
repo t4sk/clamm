@@ -40,7 +40,7 @@ forge fmt
 -   ### Mint
     -   [ ] `mint`
         -   [ ] `_modifyPosition`
-            -   [ ] `_updatePosition`
+            -   [x] `_updatePosition`
                 -   [x] `position.get`
                 -   [x] `positon.update`
                 -   [x] `ticks.update`, `ticks.clear`
@@ -48,11 +48,11 @@ forge fmt
                     -   [x] Liquidity, price and token reserves
                     -   [x] Liquidity net
             -   [ ] `getAmount0Delta` and `getAmount1Delta`
-                -   [ ] Curve of real reserves
-                -   [ ] Reserve 0 and 1
-                -   [ ] Liquidity
-                -   [ ] Liquidity delta
-                -   [ ] `getSqrtRatioAtTick`
+                -   [x] Curve of real reserves
+                -   [x] Reserve 0 and 1
+                -   [x] Liquidity
+                -   [x] Liquidity delta
+                -   [ ] `getAmount0Delta`, `getAmount1Delta`
 -   ### Burn
     TODO: fix burn 0
     -   [ ] `burn`

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.19;
 
+import "forge-std/console.sol";
 import "./interfaces/IERC20.sol";
 import "./lib/SafeCast.sol";
 import "./lib/TickMath.sol";
@@ -255,6 +256,9 @@ contract CLAMM {
         amount1 = amount1Requested > position.tokensOwed1
             ? position.tokensOwed1
             : amount1Requested;
+
+        // console.log("Amount 0", amount0, IERC20(token0).balanceOf(address(this)));
+        // console.log("Amount 1", amount1, IERC20(token1).balanceOf(address(this)));
 
         if (amount0 > 0) {
             position.tokensOwed0 -= amount0;

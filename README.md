@@ -59,9 +59,9 @@ forge fmt
     -   [ ] `collect`
 -   ### Swap
     -   [ ] `swap`
-        -   [ ] `computeSwapStep`
-            -   [ ] `sqrtRatioNextX96 = SqrtPriceMath.getNextSqrtPriceFromInput`
         -   [ ] one tick
+            -   [ ] `computeSwapStep`
+                -   [ ] `sqrtRatioNextX96 = SqrtPriceMath.getNextSqrtPriceFromInput`
         -   [ ] multi ticks
             -   [ ] `nextInitializedTickWithInOneWord`
                 -   [ ] TickBitMap, `tickBitMap.flipTick`

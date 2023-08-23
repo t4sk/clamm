@@ -376,6 +376,7 @@ contract CLAMM {
 
             step.sqrtPriceStartX96 = state.sqrtPriceX96;
 
+            // Get next tick
             (step.tickNext, step.initialized) = tickBitmap
                 .nextInitializedTickWithinOneWord(
                 state.tick,
@@ -460,13 +461,14 @@ contract CLAMM {
             }
         }
 
+        // Update sqrtPriceX96 and tick
         if (state.tick != slot0Start.tick) {
             (slot0.sqrtPriceX96, slot0.tick) = (state.sqrtPriceX96, state.tick);
         } else {
             slot0.sqrtPriceX96 = state.sqrtPriceX96;
         }
 
-        // Update liquidity if it changed
+        // Update liquidity
         if (cache.liquidityStart != state.liquidity) {
             liquidity = state.liquidity;
         }
@@ -478,6 +480,7 @@ contract CLAMM {
             feeGrowthGlobal1X128 = state.feeGrowthGlobalX128;
         }
 
+        // Set amount0 and amount1
         // zero for one | exact input |
         //    true      |    true     | amount 0 = specified - remaining (> 0)
         //              |             | amount 1 = calculated            (< 0)
@@ -497,6 +500,7 @@ contract CLAMM {
                 amountSpecified - state.amountSpecifiedRemaining
             );
 
+        // Transfer tokens
         if (zeroForOne) {
             if (amount1 < 0) {
                 IERC20(token1).transfer(recipient, uint256(-amount1));

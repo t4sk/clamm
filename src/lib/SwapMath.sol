@@ -30,7 +30,7 @@ library SwapMath {
         bool zeroForOne = sqrtRatioCurrentX96 >= sqrtRatioTargetX96;
         bool exactIn = amountRemaining >= 0;
 
-        // Calculate max amount in or max amount out and next sqrt ratio
+        // Calculate max amount in or out and next sqrt ratio
         if (exactIn) {
             // Amount remaining - fee
             uint256 amountRemainingLessFee =

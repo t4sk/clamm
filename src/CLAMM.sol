@@ -484,12 +484,12 @@ contract CLAMM {
         // zero for one | exact input |
         //    true      |    true     | amount 0 = specified - remaining (> 0)
         //              |             | amount 1 = calculated            (< 0)
+        //    false     |    false    | amount 0 = specified - remaining (< 0)
+        //              |             | amount 1 = calculated            (> 0)
         //    false     |    true     | amount 0 = calculated            (< 0)
         //              |             | amount 1 = specified - remaining (> 0)
         //    true      |    false    | amount 0 = calculated            (> 0)
         //              |             | amount 1 = specified - remaining (< 0)
-        //    false     |    false    | amount 0 = specified - remaining (< 0)
-        //              |             | amount 1 = calculated            (> 0)
         (amount0, amount1) = zeroForOne == exactInput
             ? (
                 amountSpecified - state.amountSpecifiedRemaining,

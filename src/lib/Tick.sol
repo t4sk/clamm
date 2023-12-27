@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.19;
+// Uni v3 core uses sol < 0.8 to suppress underflow / overflow
 
 import "./SafeCast.sol";
 import "./TickMath.sol";
@@ -48,36 +49,38 @@ library Tick {
         Info storage lower = self[tickLower];
         Info storage upper = self[tickUpper];
 
-        // Calculate fee growth below
-        uint256 feeGrowthBelow0X128;
-        uint256 feeGrowthBelow1X128;
-        if (tickLower <= tickCurrent) {
-            feeGrowthBelow0X128 = lower.feeGrowthOutside0X128;
-            feeGrowthBelow1X128 = lower.feeGrowthOutside1X128;
-        } else {
-            feeGrowthBelow0X128 =
-                feeGrowthGlobal0X128 - lower.feeGrowthOutside0X128;
-            feeGrowthBelow1X128 =
-                feeGrowthGlobal1X128 - lower.feeGrowthOutside1X128;
-        }
+        unchecked {
+            // Calculate fee growth below
+            uint256 feeGrowthBelow0X128;
+            uint256 feeGrowthBelow1X128;
+            if (tickLower <= tickCurrent) {
+                feeGrowthBelow0X128 = lower.feeGrowthOutside0X128;
+                feeGrowthBelow1X128 = lower.feeGrowthOutside1X128;
+            } else {
+                feeGrowthBelow0X128 =
+                    feeGrowthGlobal0X128 - lower.feeGrowthOutside0X128;
+                feeGrowthBelow1X128 =
+                    feeGrowthGlobal1X128 - lower.feeGrowthOutside1X128;
+            }
 
-        // Calculate fee growth above
-        uint256 feeGrowthAbove0X128;
-        uint256 feeGrowthAbove1X128;
-        if (tickCurrent < tickUpper) {
-            feeGrowthAbove0X128 = upper.feeGrowthOutside0X128;
-            feeGrowthAbove1X128 = upper.feeGrowthOutside1X128;
-        } else {
-            feeGrowthAbove0X128 =
-                feeGrowthGlobal0X128 - upper.feeGrowthOutside0X128;
-            feeGrowthAbove1X128 =
-                feeGrowthGlobal1X128 - upper.feeGrowthOutside1X128;
-        }
+            // Calculate fee growth above
+            uint256 feeGrowthAbove0X128;
+            uint256 feeGrowthAbove1X128;
+            if (tickCurrent < tickUpper) {
+                feeGrowthAbove0X128 = upper.feeGrowthOutside0X128;
+                feeGrowthAbove1X128 = upper.feeGrowthOutside1X128;
+            } else {
+                feeGrowthAbove0X128 =
+                    feeGrowthGlobal0X128 - upper.feeGrowthOutside0X128;
+                feeGrowthAbove1X128 =
+                    feeGrowthGlobal1X128 - upper.feeGrowthOutside1X128;
+            }
 
-        feeGrowthInside0X128 =
-            feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
-        feeGrowthInside1X128 =
-            feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+            feeGrowthInside0X128 =
+                feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
+            feeGrowthInside1X128 =
+                feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+        }
     }
 
     function update(
@@ -137,10 +140,12 @@ library Tick {
         uint256 feeGrowthGlobal1X128
     ) internal returns (int128 liquidityNet) {
         Info storage info = self[tick];
-        info.feeGrowthOutside0X128 =
-            feeGrowthGlobal0X128 - info.feeGrowthOutside0X128;
-        info.feeGrowthOutside1X128 =
-            feeGrowthGlobal1X128 - info.feeGrowthOutside1X128;
-        liquidityNet = info.liquidityNet;
+        unchecked {
+            info.feeGrowthOutside0X128 =
+                feeGrowthGlobal0X128 - info.feeGrowthOutside0X128;
+            info.feeGrowthOutside1X128 =
+                feeGrowthGlobal1X128 - info.feeGrowthOutside1X128;
+            liquidityNet = info.liquidityNet;
+        }
     }
 }
